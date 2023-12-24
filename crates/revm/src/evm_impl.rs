@@ -263,10 +263,12 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             let l1_block_info =
                 optimism::L1BlockInfo::try_fetch(self.data.db).map_err(EVMError::Database)?;
 
-            let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx else {
-                panic!("[OPTIMISM] Failed to load enveloped transaction.");
+            let tx_l1_cost = if let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx {
+                l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx)
+            } else {
+                println!("ERROR: [OPTIMISM] Failed to load enveloped transaction.");
+                U256::ZERO
             };
-            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx);
 
             // storage l1 block info for later use.
             self.data.l1_block_info = Some(l1_block_info);
